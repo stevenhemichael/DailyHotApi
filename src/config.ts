@@ -46,7 +46,7 @@ export const config: Config = {
   PORT: getNumericEnvVariable("PORT", 6688),
   DISALLOW_ROBOT: getBooleanEnvVariable("DISALLOW_ROBOT", true),
   CACHE_TTL: getNumericEnvVariable("CACHE_TTL", 3600),
-  REQUEST_TIMEOUT: getNumericEnvVariable("REQUEST_TIMEOUT", 6000),
+  REQUEST_TIMEOUT: getNumericEnvVariable("REQUEST_TIMEOUT", 10000),
   ALLOWED_DOMAIN: getEnvVariable("ALLOWED_DOMAIN") || "*",
   ALLOWED_HOST: getEnvVariable("ALLOWED_HOST") || "imsyy.top",
   USE_LOG_FILE: getBooleanEnvVariable("USE_LOG_FILE", true),
