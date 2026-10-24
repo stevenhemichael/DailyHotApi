@@ -32,34 +32,44 @@ interface WeiboResponse {
 const getList = async (noCache: boolean) => {
   const url = "https://weibo.com/ajax/side/hotSearch";
 
-  const result = await get<WeiboResponse>({
-    url,
-    noCache,
-    ttl: 60,
-    headers: {
-      Referer: "https://weibo.com/",
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-    },
-  });
+  try {
+    const result = await get<WeiboResponse>({
+      url,
+      noCache,
+      ttl: 60,
+      headers: {
+        Referer: "https://weibo.com/",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        Accept: "application/json, text/plain, */*",
+      },
+    });
 
-  if (!result.data?.data?.realtime) {
-    return { ...result, data: [] };
+    const list = result.data?.data?.realtime;
+    if (!Array.isArray(list) || !list.length) {
+      return { ...result, data: [] as WeiboItem[] };
+    }
+
+    return {
+      ...result,
+      data: list.map((v, index: number) => {
+        const title = v.word || v.word_scheme || `热搜${index + 1}`;
+        return {
+          id: v.mid || v.word_scheme || `weibo-${index}`,
+          title: title,
+          desc: v.word_scheme || `#${title}#`,
+          timestamp: getTime(v.onboard_time || Date.now()),
+          url: `https://s.weibo.com/weibo?q=${encodeURIComponent(title)}`,
+          mobileUrl: `https://s.weibo.com/weibo?q=${encodeURIComponent(title)}`,
+        };
+      }),
+    };
+  } catch {
+    // 被目标站点 403 / 超时 / 网络失败时返回空列表，避免整个站点报错
+    return {
+      fromCache: false,
+      updateTime: new Date().toISOString(),
+      data: [] as WeiboItem[],
+    };
   }
-
-  const list = result.data.data.realtime;
-  return {
-    ...result,
-    data: list.map((v, index: number) => {
-      const title = v.word || v.word_scheme || `热搜${index + 1}`;
-      return {
-        id: v.mid || v.word_scheme || `weibo-${index}`,
-        title: title,
-        desc: v.word_scheme || `#${title}#`,
-        timestamp: getTime(v.onboard_time || Date.now()),
-        url: `https://s.weibo.com/weibo?q=${encodeURIComponent(title)}`,
-        mobileUrl: `https://s.weibo.com/weibo?q=${encodeURIComponent(title)}`,
-      };
-    }),
-  };
 };
